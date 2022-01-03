@@ -39,19 +39,20 @@ namespace AvaloniaPerlinNoise
 
         class RenderPanel : Panel
         {
-            public RenderPanel()
-            {
-                this.Background = Brushes.Black;
-            }
             public override void Render(DrawingContext context)
             {
                 base.Render(context);
+
+                context.DrawRectangle(
+                    Brushes.Black,
+                    null,
+                    new Rect(0, 0, Bounds.Width, Bounds.Height));
 
                 double value = PerlinNoise.Noise(t, t); /*mRandom.Next(-100, 100) / 100.0;*/
                 double y = value.Map(-1, 1, 20, Bounds.Height - 20);
 
                 mGeneratedValues.Add(y);
-                if (mGeneratedValues.Count > Bounds.Width / 2)
+                if (mGeneratedValues.Count > 3 * Bounds.Width / 4)
                 {
                     mGeneratedValues.RemoveAt(0);
                 }
