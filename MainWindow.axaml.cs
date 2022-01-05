@@ -48,40 +48,37 @@ namespace AvaloniaPerlinNoise
                     null,
                     new Rect(0, 0, Bounds.Width, Bounds.Height));
 
-                double value = PerlinNoise.Noise(t, t); /*mRandom.Next(-100, 100) / 100.0;*/
-                double y = value.Map(-1, 1, 20, Bounds.Height - 20);
-
-                mGeneratedValues.Add(y);
-                if (mGeneratedValues.Count > 3 * Bounds.Width / 4)
+                mXOffset = mStart;
+                for (int i = 0; i < Bounds.Width; ++i)
                 {
-                    mGeneratedValues.RemoveAt(0);
-                }
+                    double value = PerlinNoise.Noise(mXOffset, mXOffset); /*mRandom.Next(-100, 100) / 100.0;*/
+                    double y = value.Map(-1, 1, 20, Bounds.Height - 20);
 
-                for (int i = 0; i < mGeneratedValues.Count; ++i)
-                {
                     context.DrawLine(
                         new Pen(Brushes.White, 1),
-                        new Point(i, mGeneratedValues[i]),
-                        new Point(i, mGeneratedValues[i] + 1));
+                        new Point(i, y),
+                        new Point(i, y + 1));
+
+                    mXOffset += 0.01;
                 }
 
-                t += 0.01;
+                mStart += 0.01;
             }
 
             Random mRandom = new Random();
-            double t;
-            List<double> mGeneratedValues = new List<double>();
+            double mXOffset;
+            double mStart;
         }
 
         RenderPanel mRenderPanel;
         DispatcherTimer mTimer;
     }
 
-        static class Extensions
+    static class Extensions
+    {
+        public static double Map(this double value, double fromSource, double toSource, double fromTarget, double toTarget)
         {
-            public static double Map(this double value, double fromSource, double toSource, double fromTarget, double toTarget)
-            {
-                return (value - fromSource) / (toSource - fromSource) * (toTarget - fromTarget) + fromTarget;
-            }
+            return (value - fromSource) / (toSource - fromSource) * (toTarget - fromTarget) + fromTarget;
         }
+    }
 }

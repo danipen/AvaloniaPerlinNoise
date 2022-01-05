@@ -4,6 +4,11 @@ namespace AvaloniaPerlinNoise
 {
     public static class PerlinNoise
     {
+        public static double Noise(double t)
+        {
+            return Noise(t, t);
+        }
+
         public static double Noise(double x, double y)
         {
             x = Math.Abs(x);
