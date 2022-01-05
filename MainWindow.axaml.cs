@@ -1,9 +1,9 @@
 using System;
-using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 
 namespace AvaloniaPerlinNoise
@@ -17,7 +17,7 @@ namespace AvaloniaPerlinNoise
             this.AttachDevTools();
 #endif
             mTimer = new DispatcherTimer(
-                TimeSpan.FromMilliseconds(8),
+                TimeSpan.FromMilliseconds(50),
                 DispatcherPriority.Render,
                 OnTimerTick);
 
@@ -25,6 +25,8 @@ namespace AvaloniaPerlinNoise
             Content = mRenderPanel;
 
             mTimer.Start();
+
+            this.Renderer.DrawFps = true;
         }
 
         private void OnTimerTick(object? sender, EventArgs e)
@@ -48,25 +50,46 @@ namespace AvaloniaPerlinNoise
                     null,
                     new Rect(0, 0, Bounds.Width, Bounds.Height));
 
-                mXOffset = mStart;
-                for (int i = 0; i < Bounds.Width; ++i)
+                if (mBmp == null)
+                    mBmp = new RenderTargetBitmap(
+                        new PixelSize((int)Bounds.Width, (int)Bounds.Height),
+                        new Vector(96, 96));
+
+                using (var gc = mBmp.CreateDrawingContext(null))
+                using(var ctx = new DrawingContext(gc, false))
                 {
-                    double value = PerlinNoise.Noise(mXOffset, mXOffset); /*mRandom.Next(-100, 100) / 100.0;*/
-                    double y = value.Map(-1, 1, 20, Bounds.Height - 20);
+                    mYOffset = mStart;
+                    for (int i = 0; i < Bounds.Width; ++i)
+                    {
+                        mXOffset = mStart;
+                        for (int j = 0; j < Bounds.Height; j++)
+                        {
+                            double value = PerlinNoise.Noise(mXOffset, mYOffset);
+ 
+                            Color c = mColorHeatMap.GetColorForValue(value.Map(-1, 1, 0, 1), 1);
 
-                    context.DrawLine(
-                        new Pen(Brushes.White, 1),
-                        new Point(i, y),
-                        new Point(i, y + 1));
+                            ctx.DrawRectangle(
+                                new SolidColorBrush(c),
+                                null,
+                                new Rect(i, j, 1, 1));
 
-                    mXOffset += 0.01;
+                            mXOffset += 0.01;
+                        }
+
+                        mYOffset += 0.01;
+                    }
                 }
+
+                context.DrawImage(mBmp, new Rect(0, 0, Bounds.Width, Bounds.Height));
 
                 mStart += 0.01;
             }
 
+            RenderTargetBitmap mBmp;
+            ColorHeatMap mColorHeatMap = new ColorHeatMap(150);
             Random mRandom = new Random();
             double mXOffset;
+            double mYOffset;
             double mStart;
         }
 
