@@ -1,9 +1,11 @@
 using System;
+using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using Avalonia.Threading;
 
 namespace AvaloniaPerlinNoise
@@ -51,33 +53,32 @@ namespace AvaloniaPerlinNoise
                     new Rect(0, 0, Bounds.Width, Bounds.Height));
 
                 if (mBmp == null)
-                    mBmp = new RenderTargetBitmap(
+                    mBmp = new WriteableBitmap(
                         new PixelSize((int)Bounds.Width, (int)Bounds.Height),
-                        new Vector(96, 96));
+                        new Vector(96, 96),
+                        PixelFormat.Bgra8888,
+                        AlphaFormat.Unpremul);
 
-                using (var gc = mBmp.CreateDrawingContext(null))
-                using(var ctx = new DrawingContext(gc, false))
+                using (var fb = mBmp.Lock())
                 {
+                    var data = new int[fb.Size.Width * fb.Size.Height];
+
                     mYOffset = mStart;
-                    for (int i = 0; i < Bounds.Width; ++i)
+                    for (int x = 0; x < fb.Size.Width; x++)
                     {
                         mXOffset = mStart;
-                        for (int j = 0; j < Bounds.Height; j++)
+                        for (int y = 0; y < fb.Size.Height; y++)
                         {
-                            double value = PerlinNoise.Noise(mXOffset, mYOffset);
- 
-                            Color c = mColorHeatMap.GetColorForValue(value.Map(-1, 1, 0, 1), 1);
-
-                            ctx.DrawRectangle(
-                                new SolidColorBrush(c),
-                                null,
-                                new Rect(i, j, 1, 1));
-
+                            double value = PerlinNoise.Noise(mXOffset, mYOffset);;
+                            Color c = ColorHeatMap.GetColorForValue(value.Map(-1, 1, 0, 1), 1);
+                            data[y * fb.Size.Width + x] = (int) c.ToUint32();
                             mXOffset += 0.01;
                         }
 
                         mYOffset += 0.01;
                     }
+
+                    Marshal.Copy(data, 0, fb.Address, fb.Size.Width * fb.Size.Height);
                 }
 
                 context.DrawImage(mBmp, new Rect(0, 0, Bounds.Width, Bounds.Height));
@@ -85,8 +86,7 @@ namespace AvaloniaPerlinNoise
                 mStart += 0.01;
             }
 
-            RenderTargetBitmap mBmp;
-            ColorHeatMap mColorHeatMap = new ColorHeatMap(150);
+            WriteableBitmap mBmp;
             Random mRandom = new Random();
             double mXOffset;
             double mYOffset;
