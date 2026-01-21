@@ -28,7 +28,7 @@ namespace AvaloniaPerlinNoise
 
             mTimer.Start();
 
-            this.Renderer.DrawFps = true;
+            //this.Renderer.DrawFps = true;
         }
 
         private void OnTimerTick(object? sender, EventArgs e)
@@ -41,7 +41,7 @@ namespace AvaloniaPerlinNoise
             AvaloniaXamlLoader.Load(this);
         }
 
-        class RenderPanel : Panel
+        class RenderPanel : UserControl
         {
             public override void Render(DrawingContext context)
             {
